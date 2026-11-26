@@ -1,19 +1,36 @@
+# Local dev databases. Start only what you need: `docker compose up -d postgres redis`
+name: db
+
 services:
+  postgres:
+    image: postgres:18
+    container_name: db-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user_postgres
+      POSTGRES_PASSWORD: pass_postgres
+      POSTGRES_DB: dev_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+
   mysql:
-    image: mysql:latest
+    image: mysql:8.4
     container_name: db-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_USER: user_mysql
       MYSQL_PASSWORD: pass_mysql
+      MYSQL_DATABASE: dev_db
     ports:
       - "3306:3306"
     volumes:
-      - db-mysql-data:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
 
   mongo:
-    image: mongo:latest
+    image: mongo:8
     container_name: db-mongo
     restart: unless-stopped
     environment:
@@ -22,23 +39,11 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - db-mongo-data:/data/db
-      - db-mongo-config:/data/configdb
-
-  postgres:
-    image: postgres:latest
-    container_name: db-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: user_postgres
-      POSTGRES_PASSWORD: pass_postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - db-postgres-data:/var/lib/postgresql
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
 
   redis:
-    image: redis:latest
+    image: redis:8
     container_name: db-redis
     restart: unless-stopped
     ports:
@@ -53,19 +58,14 @@ services:
       MINIO_ROOT_PASSWORD: pass_minio
     ports:
       - "9000:9000" # S3 API
-      - "9001:9001" # Web console
+      - "9001:9001" # web console
     volumes:
-      - db-minio-data:/data
+      - minio-data:/data
     command: server /data --console-address ":9001"
 
 volumes:
-  db-mysql-data:
-    driver: local
-  db-mongo-data:
-    driver: local
-  db-mongo-config:
-    driver: local
-  db-postgres-data:
-    driver: local
-  db-minio-data:
-    driver: local
+  postgres-data:
+  mysql-data:
+  mongo-data:
+  mongo-config:
+  minio-data:
