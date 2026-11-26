@@ -8,8 +8,10 @@
     "source.fixAll.eslint": "explicit"
   },
   "[yaml]": {
-    "editor.defaultFormatter": "redhat.vscode-yaml"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "files.eol": "\n",
+  "js/ts.preferences.importModuleSpecifier": "shortest",
 
   // --- Editor: Cursor ---
   "editor.cursorBlinking": "smooth",
@@ -215,10 +217,8 @@
   "chat.viewSessions.orientation": "stacked",
   "chat.disableAIFeatures": true,
   "claudeCode.preferredLocation": "panel",
-  "codeium.enableConfig": {
-    "*": true,
-    "dotenv": true,
-    "markdown": true
-  },
-  "workbench.settings.applyToAllProfiles": []
+  "workbench.settings.applyToAllProfiles": [],
+  "git.openRepositoryInParentFolders": "always",
+  "claudeCode.hideOnboarding": true,
+  "geminicodeassist.project": "gen-lang-client-0139528026"
 }
