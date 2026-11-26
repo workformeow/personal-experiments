@@ -1,63 +1,48 @@
 // @ts-check
-import { defineConfig } from 'eslint/config'
 import eslint from '@eslint/js'
 import angular from 'angular-eslint'
 import prettier from 'eslint-config-prettier'
 import importPlugin from 'eslint-plugin-import-x'
 import unusedImports from 'eslint-plugin-unused-imports'
 import tseslint from 'typescript-eslint'
+import { defineConfig } from 'eslint/config'
 
 export default defineConfig(
-  {
-    ignores: ['.angular/**', 'dist/**', 'node_modules/**'],
-  },
+  { ignores: ['.angular/**', 'dist/**', 'node_modules/**', 'coverage/**', 'eslint.config.mjs'] },
 
-  // ── TypeScript ──────────────────────────────────────────────────────────────
   {
-    files: ['**/*.ts'],
+    files: ['src/**/*.ts'],
     extends: [
       eslint.configs.recommended,
-      ...tseslint.configs.recommended,
-      ...tseslint.configs.stylistic,
-      ...angular.configs.tsRecommended,
-      prettier,
+      tseslint.configs.recommendedTypeChecked,
+      tseslint.configs.stylistic,
+      angular.configs.tsRecommended,
+      prettier, // last: turns off rules that fight Prettier
     ],
-    // Enables linting for inline templates inside @Component({ template: `...` })
+    // Lint inline templates inside @Component({ template: `...` })
     processor: angular.processInlineTemplates,
-    plugins: {
-      import: importPlugin,
-      'unused-imports': unusedImports,
+    languageOptions: {
+      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
     },
+    plugins: { import: importPlugin, 'unused-imports': unusedImports },
     rules: {
-      // ── Safety & error handling ───────────────────────────────────────────────
-      'no-async-promise-executor': 'error',
-      'no-eval': 'error',
+      // Correctness
       eqeqeq: 'error',
-      'no-var': 'error',
-      'prefer-const': 'error',
-      curly: ['error', 'all'],
+      curly: ['error', 'multi-line'],
+      'no-eval': 'error',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
-      '@typescript-eslint/no-floating-promises': 'error',
-      '@typescript-eslint/no-misused-promises': 'error',
-      '@typescript-eslint/only-throw-error': 'error',
-
-      // ── TypeScript ──────────────────────────────────────────────────────────
-      'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': [
+      '@typescript-eslint/switch-exhaustiveness-check': [
         'error',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_',
-        },
+        { considerDefaultExhaustiveForUnions: true },
       ],
       '@typescript-eslint/no-non-null-assertion': 'warn',
-      '@typescript-eslint/consistent-type-imports': [
-        'error',
-        { prefer: 'type-imports', fixStyle: 'separate-type-imports' },
-      ],
+      '@typescript-eslint/no-unnecessary-condition': 'warn',
+      '@typescript-eslint/require-await': 'off',
+      // Angular passes static methods as values (Validators.required)
+      '@typescript-eslint/unbound-method': 'off',
+      complexity: ['warn', { max: 15 }],
 
-      // ── Angular ─────────────────────────────────────────────────────────────
+      // Angular
       '@angular-eslint/prefer-standalone': 'error',
       '@angular-eslint/directive-selector': [
         'error',
@@ -68,14 +53,19 @@ export default defineConfig(
         { type: 'element', prefix: 'app', style: 'kebab-case' },
       ],
 
-      // ── Imports ──────────────────────────────────────────────────────────────
-      'unused-imports/no-unused-imports': 'error',
+      // Imports
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        { prefer: 'type-imports', fixStyle: 'separate-type-imports' },
+      ],
+      'import/consistent-type-specifier-style': ['error', 'prefer-top-level'],
+      'import/no-duplicates': 'error',
+      'import/no-cycle': 'warn',
       'import/order': [
         'error',
         {
-          groups: ['builtin', 'external', 'internal', ['parent', 'sibling'], 'index', 'type'],
+          groups: [['builtin', 'external'], 'internal', ['parent', 'sibling', 'index'], 'type'],
           pathGroups: [
-            // Hoist Angular and RxJS to the top of external imports
             { pattern: '@angular/**', group: 'external', position: 'before' },
             { pattern: 'rxjs/**', group: 'external', position: 'before' },
           ],
@@ -84,36 +74,26 @@ export default defineConfig(
           'newlines-between': 'never',
         },
       ],
+      '@typescript-eslint/no-unused-vars': 'off', // handled by unused-imports (auto-fixable)
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'warn',
+        { varsIgnorePattern: '^_', argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
     },
   },
 
-  // ── HTML templates ──────────────────────────────────────────────────────────
   {
-    files: ['**/*.html'],
-    extends: [
-      ...angular.configs.templateRecommended,
-      ...angular.configs.templateAccessibility, // a11y rules (aria, roles, alt text, etc.)
-    ],
+    files: ['src/**/*.html'],
+    extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
     rules: {
       '@angular-eslint/template/elements-content': 'off',
+      '@angular-eslint/template/prefer-control-flow': 'error', // @if/@for over *ngIf/*ngFor
     },
+  },
+
+  {
+    files: ['**/*.spec.ts'],
+    rules: { '@typescript-eslint/no-non-null-assertion': 'off', 'no-console': 'off' },
   }
 )
-
-/*
- * Example — auto-fix result (eslint --fix)
- *
- * Before:
- *   import { Component, OnInit } from '@angular/core'  // OnInit unused
- *   import { UserService } from './user.service'
- *   import { Observable } from 'rxjs'
- *   import { Router } from '@angular/router'
- *   import { environment } from '../../environments/environment'
- *
- * After:
- *   import { Component } from '@angular/core'          // @angular (hoisted)
- *   import { Router } from '@angular/router'
- *   import { Observable } from 'rxjs'                  // rxjs (hoisted)
- *   import { environment } from '../../environments/environment'  // parent
- *   import { UserService } from './user.service'       // sibling
- */

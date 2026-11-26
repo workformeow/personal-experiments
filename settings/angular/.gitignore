@@ -13,7 +13,3 @@ dist/
 # Logs
 *.log
 npm-debug.log*
-
-# IDE
-.vscode/
-.idea/

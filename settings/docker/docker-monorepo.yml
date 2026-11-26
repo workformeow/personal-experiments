@@ -1,0 +1,36 @@
+name: e-commerce
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-app}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-app}
+      POSTGRES_DB: ${DB_NAME:-app}
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: ./api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-app}:${DB_PASSWORD:-app}@db:5432/${DB_NAME:-app}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-4200}:80"
+    depends_on:
+      - api
+
+volumes:
+  db-data:

@@ -1,66 +1,46 @@
 # Angular Configuration
 
-Sample configuration files for Angular projects in `personal-experiments/angular`.
+Shared config for Angular projects: lint and format after `ng new`, and Docker so anyone can run the app with only Docker installed.
 
-## Recommended Configs
+## Files
 
-- **Prettier** (`.prettierrc`, `.prettierignore`): Settings for code formatting
-- **ESLint** (`eslint.config.mjs`): Settings for linting TypeScript and Angular templates
-- **.gitignore** / **.dockerignore**: Standard ignores (`node_modules`, `dist`, `.angular`, `.env*`)
-- **Docker** (`Dockerfile`, `docker-compose.yml`, `nginx.conf`): Multi-stage build served via Nginx
+- `.prettierrc`: formatting (Angular HTML parser, Tailwind class sorting)
+- `eslint.config.mjs`: type-aware lint, Angular rules, template a11y, import order
+- `.gitignore` / `.dockerignore`
+- `Dockerfile` / `nginx.conf` / `docker-compose.yml`: build with Node, serve with nginx
+- `proxy.conf.json`: forwards `/api` to `localhost:3000` during `ng serve`
 
-## Usage
+## Setup
 
-1. Copy the files you need to your project folder (e.g., `angular/form-examples`)
-2. Customize according to your project requirements
-3. Install dependencies:
+1. Copy the files into the project root.
+2. Install dev dependencies:
 
 ```bash
-npm install -D @eslint/js angular-eslint eslint eslint-config-prettier eslint-plugin-import-x eslint-plugin-unused-imports prettier prettier-plugin-tailwindcss typescript-eslint
+npm install -D eslint @eslint/js typescript-eslint angular-eslint eslint-config-prettier eslint-plugin-import-x eslint-plugin-unused-imports prettier prettier-plugin-tailwindcss
 ```
 
-## Prettier Configuration
-
-The provided `.prettierrc` contains the following settings:
+3. Add to `package.json` scripts:
 
 ```json
-{
-  "useTabs": false,
-  "tabWidth": 2,
-  "printWidth": 100,
-  "singleQuote": true,
-  "trailingComma": "es5",
-  "semi": false,
-  "bracketSpacing": true,
-  "arrowParens": "always",
-  "endOfLine": "lf",
-  "htmlWhitespaceSensitivity": "css",
-  "proseWrap": "preserve",
-  "plugins": ["prettier-plugin-tailwindcss"],
-  "overrides": [
-    {
-      "files": "*.html",
-      "options": {
-        "parser": "angular"
-      }
-    }
-  ]
-}
+"lint": "eslint .",
+"fix": "eslint . --fix && prettier --write ."
 ```
 
-## ESLint Configuration
+4. In `angular.json`, under `serve.options`, add `"proxyConfig": "proxy.conf.json"`.
 
-`eslint.config.mjs` uses flat config (ESM) with a TypeScript rule set and a separate HTML template rule set:
+## Calling an API
 
-- `angular-eslint` – Angular-specific rules (`component-selector`, `directive-selector`, `prefer-standalone`) plus template rules (`templateRecommended`, `templateAccessibility` for a11y)
-- `eslint-plugin-import-x` – import ordering, with `@angular/**` and `rxjs/**` hoisted to the top
-- `eslint-plugin-unused-imports` – auto-remove unused imports on `--fix`
-- `eslint-config-prettier` – disables ESLint rules that conflict with Prettier
+Call relative paths (`/api/products`), so no `environment.ts` is needed:
 
-Rules also cover general safety/correctness (`curly` — always require `{}` around `if`/`for`/`while` blocks, `eqeqeq`, `no-var`, `prefer-const`, `no-floating-promises`, `consistent-type-imports`, etc.), matching the baseline used in `settings/nodejs`. See `eslint.config.mjs` for the full rule set.
+- `ng serve`: `proxy.conf.json` forwards to `localhost:3000`
+- Docker: `nginx.conf` forwards to the `api` service in the same compose project
 
-## Information
+Both strip `/api` before forwarding. Without an `api` service, `/api` answers 502 and the app still runs.
 
-- [Prettier Documentation](https://prettier.io/docs/en/options.html)
-- [ESLint Angular Plugin](https://github.com/angular-eslint/angular-eslint)
-- [TypeScript ESLint](https://typescript-eslint.io/)
+## Run with Docker
+
+```bash
+docker compose up -d --build
+```
+
+Open http://localhost:4200 (change with `WEB_PORT` in `.env`).

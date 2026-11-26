@@ -1,13 +1,19 @@
-# Dependencies
+# Dependencies (reinstalled by npm ci)
 node_modules
 
-# Build output
+# Build output and Angular cache
 dist
-
-# IDE
 .angular
-.vscode
+coverage
 
-# Git
+# Env files: Angular reads none at runtime
+.env*
+
+# Logs
+*.log
+
+# IDE and git
+.vscode
+.idea
 .git
 .gitignore
