@@ -1,13 +1,15 @@
 # Dependencies
 node_modules/
 
-# Build output
+# Build output and test coverage
 dist/
+coverage/
 
-# Environment
+# Env files: keep only the example
 .env
 .env.*
 !.env.example
 
 # Logs
 logs/
+*.log

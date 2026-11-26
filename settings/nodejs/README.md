@@ -1,77 +1,43 @@
 # Node.js Configuration
 
-Sample configuration files for Nodejs projects in `personal-experiments/nodejs`.
+Shared config for small Node.js + TypeScript projects.
 
-## Recommended Configs
+## Files
 
-- **Prettier** (`.prettierrc`): Settings for code formatting
-- **ESLint** (`eslint.config.mjs`): Settings for linting TypeScript
-- **TypeScript** (`tsconfig.json`): Base compiler options for a plain Node.js/TS project (no bundler)
-- **.gitignore** / **.dockerignore**: Standard ignores (`node_modules`, `dist`, `logs`, `.env*`)
-- **Docker** (`Dockerfile`, `docker-compose.yml`): Multi-stage-style build (`npm run build` at image build time, `npm start` at runtime)
+- `.prettierrc`: formatting
+- `eslint.config.mjs`: type-aware lint and import order
+- `tsconfig.json`: strict TS, `@/*` → `src/*`
+- `.nvmrc`: Node version
+- `.gitattributes`: LF on every OS
+- `.gitignore` / `.dockerignore`
+- `Dockerfile` / `docker-compose.yml`
 
-## Usage
+## Setup
 
-1. Copy the files you need to your project folder (e.g., `nodejs/logger`)
-2. Customize according to your project requirements
-3. Install dependencies:
+1. Copy the files into the project root.
+2. Install dev dependencies:
 
 ```bash
-npm install -D @eslint/js @types/node eslint eslint-config-prettier eslint-plugin-import-x eslint-plugin-n eslint-plugin-security eslint-plugin-unused-imports globals prettier rimraf tsc-alias tsx typescript typescript-eslint
+npm install -D typescript tsx tsc-alias @types/node prettier eslint @eslint/js typescript-eslint eslint-config-prettier eslint-plugin-import-x eslint-plugin-n eslint-plugin-unused-imports globals
 ```
 
-## Prettier Configuration
-
-The provided `.prettierrc` contains the following settings:
+3. Add to `package.json`:
 
 ```json
 {
-  "useTabs": false,
-  "tabWidth": 2,
-  "printWidth": 100,
-  "singleQuote": true,
-  "trailingComma": "es5",
-  "semi": false,
-  "bracketSpacing": true,
-  "arrowParens": "always",
-  "htmlWhitespaceSensitivity": "css",
-  "proseWrap": "preserve"
+  "type": "module",
+  "engines": { "node": ">=26" },
+  "scripts": {
+    "dev": "tsx --watch src/main.ts",
+    "start": "node --enable-source-maps dist/main.js",
+    "build": "npm run clean && tsc && tsc-alias --resolve-full-paths",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "lint": "eslint .",
+    "fix": "eslint . --fix && prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm run build"
+  }
 }
 ```
 
-## ESLint Configuration
-
-`eslint.config.mjs` uses flat config with type-aware TypeScript linting, plus a few focused plugins:
-
-- `eslint-plugin-import-x` – import ordering (`@/*` alias grouped as internal)
-- `eslint-plugin-unused-imports` – auto-remove unused imports on `--fix`
-- `eslint-plugin-n` – catches deprecated/unsupported Node.js API usage
-- `eslint-plugin-security` – warns on common injection-prone patterns
-- `eslint-config-prettier` – disables ESLint rules that conflict with Prettier
-
-Rules focus on safety and correctness (`no-floating-promises`, `eqeqeq`, `no-var`, `consistent-type-imports`, etc.) and stay generic — no project-specific architecture rules (e.g. feature-folder import boundaries) since this is meant as a plain starting point. See `eslint.config.mjs` for the full rule set.
-
-## Script Package.json
-
-```json
-"scripts": {
-    "start": "node dist/main.js",
-    "dev": "tsx watch src/main",
-    "clean": "rimraf dist",
-    "build": "npm run clean && tsc && tsc-alias",
-    "format": "prettier --write .",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
-  },
-```
-
-## Best Practices
-
-- Run linting and formatting checks before committing changes
-- Consider adding pre-commit hooks to automate formatting
-- Keep configurations consistent across related projects
-
-## For More Information
-
-- [Prettier Documentation](https://prettier.io/docs/en/options.html)
-- [TypeScript ESLint](https://typescript-eslint.io/)
+4. Run `nvm use`, then `npm run dev`.

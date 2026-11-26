@@ -1,29 +1,19 @@
-# Use Node.js as base image
-FROM node:24.19.0-alpine
-
-# Default to production so a plain `docker run` / `docker compose up` behaves
-# like a real deployment (e.g. Render) instead of dev/watch mode. Override
-# with `-e NODE_ENV=development` if you want dev behavior in a container.
-ENV NODE_ENV=production
-
-# Set working directory
+# ── Build: install all deps and compile TS ──
+FROM node:26.13.1-slim AS build
 WORKDIR /app
-
-# Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
-
-# Install dependencies
 RUN npm ci
-
-# Copy the rest of the application
 COPY . .
-
-# Compile TypeScript during image build (build stage has more memory available
-# than the running instance) — avoids OOM on small/free hosting plans at startup.
 RUN npm run build
 
-# Expose port 3000
+# ── Run: compiled code + production deps only ──
+FROM node:26.13.1-slim
+WORKDIR /app
+ENV NODE_ENV=development
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY --from=build /app/dist ./dist
+USER node
 EXPOSE 3000
 
-# Command to run the application
-CMD ["npm", "start"]
+CMD ["node", "--enable-source-maps", "dist/main.js"]

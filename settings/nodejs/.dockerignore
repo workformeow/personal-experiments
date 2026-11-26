@@ -1,17 +1,15 @@
-
-# Dependencies
+# Dependencies (reinstalled by npm ci)
 node_modules
 
-# Build output
+# Build output and test coverage
 dist
+coverage
 
-# Environment
-.env
-.env.*
-!.env.example
+# Secrets and env files: inject at runtime instead
+.env*
 
 # Logs
-logs/
+logs
 
 # Git
 .git
